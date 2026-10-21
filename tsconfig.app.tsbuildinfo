@@ -1,1 +1,1 @@
-{"root":["./src/app.tsx","./src/demo.ts","./src/firebase.ts","./src/main.tsx","./src/real.ts","./src/types.ts"],"errors":true,"version":"5.9.3"}
+{"root":["./src/app.tsx","./src/demo.ts","./src/firebase.ts","./src/main.tsx","./src/real.ts","./src/types.ts","./src/vite-env.d.ts"],"version":"5.9.3"}

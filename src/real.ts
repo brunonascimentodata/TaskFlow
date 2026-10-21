@@ -1,4 +1,4 @@
-import {collection,doc,getDoc,getDocs,setDoc,updateDoc,query,where} from 'firebase/firestore';
+import {collection,doc,getDoc,getDocs,setDoc,updateDoc,query,where,deleteDoc} from 'firebase/firestore';
 import {createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,sendPasswordResetEmail,sendEmailVerification,updateProfile} from 'firebase/auth';
 import {auth,db} from './firebase';
 import type {AppData,Category,Company,Person,Ticket} from './types';

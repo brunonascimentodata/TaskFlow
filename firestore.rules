@@ -1,0 +1,56 @@
+rules_version = '2';
+service cloud.firestore {
+ match /databases/{database}/documents {
+  function signed() { return request.auth != null; }
+  function personPath(){ return /databases/$(database)/documents/companies/main/people/$(request.auth.uid); }
+  function profile(){ return get(personPath()).data; }
+  function isActive(){ return signed() && exists(personPath()) && profile().active == true; }
+  function admin(){return isActive() && profile().role == 'admin';}
+  function agent(){return isActive() && profile().role == 'agent';}
+  function canHandle(cat){return agent() && cat in profile().categoryIds;}
+  function invPath(email){return /databases/$(database)/documents/companies/main/invitations/$(email);}
+  match /companies/main {
+   allow read: if isActive();
+   allow update: if admin() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name','accent','initials','createdAt']);
+   allow create,delete: if false;
+   match /categories/{categoryId} {
+    allow read: if isActive();
+    allow create,update: if admin() && request.resource.data.id == categoryId;
+    allow delete: if false;
+   }
+   match /invitations/{email} {
+    allow get: if admin() || (signed() && request.auth.token.email == email && request.auth.token.email_verified == true);
+    allow list: if admin();
+    allow create,update: if admin() && request.resource.data.email == email && request.resource.data.role in ['admin','agent','requester'];
+    allow delete: if admin();
+   }
+   match /people/{personId} {
+    allow read: if isActive();
+    allow create: if signed() && request.auth.uid == personId && request.auth.token.email_verified == true && exists(invPath(request.auth.token.email))
+      && request.resource.data.keys().hasOnly(['id','name','email','role','categoryIds','active'])
+      && request.resource.data.id == personId
+      && request.resource.data.email == request.auth.token.email
+      && request.resource.data.role == get(invPath(request.auth.token.email)).data.role
+      && request.resource.data.categoryIds == get(invPath(request.auth.token.email)).data.categoryIds
+      && request.resource.data.active == true;
+    allow update: if admin() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name','role','categoryIds','active']);
+    allow delete: if false;
+   }
+   match /tickets/{ticketId} {
+    function canRead(){return isActive() && (admin() || resource.data.requesterId == request.auth.uid || (agent() && (resource.data.categoryId in profile().categoryIds || resource.data.assigneeId == request.auth.uid)));}
+    allow read: if canRead();
+    allow create: if isActive() && request.resource.data.id == ticketId && request.resource.data.requesterId == request.auth.uid
+      && request.resource.data.status == 'open' && request.resource.data.assigneeId == null
+      && request.resource.data.notes.size() == 0
+      && request.resource.data.keys().hasOnly(['id','code','title','description','categoryId','priority','status','requesterId','assigneeId','createdAt','updatedAt','notes']);
+    allow update: if canRead() && (
+      (admin() || canHandle(resource.data.categoryId))
+      || (resource.data.requesterId == request.auth.uid && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['notes','updatedAt']))
+    ) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','assigneeId','notes','updatedAt'])
+      && request.resource.data.id == resource.data.id && request.resource.data.requesterId == resource.data.requesterId
+      && request.resource.data.categoryId == resource.data.categoryId;
+    allow delete: if false;
+   }
+  }
+ }
+}

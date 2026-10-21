@@ -34,5 +34,5 @@ export function makeDemo():AppData{
  });
  return {company:{name:'NEXORA Technologies',initials:'NX',accent:'#6868e8'},categories:structuredClone(demoCategories),people:structuredClone(demoPeople),tickets};
 }
-export function readDemo():AppData {try{const raw=sessionStorage.getItem('taskflow-demo');if(raw)return JSON.parse(raw) as AppData;}catch{/* reset */}const data=makeDemo();sessionStorage.setItem('taskflow-demo',JSON.stringify(data));return data}
+export function readDemo():AppData {try{const raw=sessionStorage.getItem('taskflow-demo');if(raw)return JSON.parse(raw) as AppData;}catch{/* Se os dados da sessão estiverem inválidos, começo com a demo limpa. */}const data=makeDemo();sessionStorage.setItem('taskflow-demo',JSON.stringify(data));return data}
 export function saveDemo(data:AppData){sessionStorage.setItem('taskflow-demo',JSON.stringify(data))}

@@ -1,120 +1,116 @@
-# TaskFlow · Service Management
+# TaskFlow
 
-Sistema de gestão de chamados com React, TypeScript e Firebase, tema claro/escuro, categorias por atendente, dashboard, relatórios e ambiente de demonstração público.
+Um sistema web para organizar chamados internos. Fiz esse projeto para praticar desenvolvimento front-end com React e TypeScript e também entender melhor como funciona uma aplicação com login, banco de dados e permissões de usuário.
 
-## 1. Executar no VS Code
+A ideia é simples: a pessoa abre um chamado, escolhe a categoria e o atendimento fica disponível para quem cuida daquele assunto. Por exemplo, um atendente pode cuidar de Marketing, Intranet e Hardware, enquanto outro fica responsável por acessos e liberação de sites.
 
-**Requisitos:** Node.js 20+ e npm.
+O projeto ainda está evoluindo. Tem coisas que já dá para testar e outras que quero melhorar antes de pensar em uso real por uma empresa.
+
+## O que já tem
+
+- Login com e-mail e senha pelo Firebase Authentication.
+- Chamados com categoria, prioridade, status e responsável.
+- Cadastro de categorias e vínculo com atendentes.
+- Três tipos de usuário: administrador, atendente e solicitante.
+- Dashboard com indicadores e gráficos básicos.
+- Tema claro e escuro, escolhido por cada pessoa.
+- Um modo de demonstração para conhecer o sistema sem criar conta.
+
+No modo demo, os dados são fictícios e ficam salvos apenas na sessão do navegador. Dá para trocar entre os perfis e testar as telas. **Essa troca de perfil é uma simulação**, não um login real com permissões no Firebase.
+
+## Tecnologias
+
+React, TypeScript, Vite, Firebase Authentication, Cloud Firestore, Recharts e CSS. Os ícones são do Lucide.
+
+## Rodando na sua máquina
+
+Precisa ter o Node.js e o npm instalados.
 
 ```bash
 npm install
-cp .env.example .env
 npm run dev
 ```
 
-No Windows PowerShell use `Copy-Item .env.example .env`.
+Abra o endereço informado no terminal, geralmente `http://localhost:5173`.
 
-Abra o endereço exibido pelo Vite (normalmente http://localhost:5173).
+Para testar apenas a demo, não é necessário preparar o banco. Na tela inicial, escolha **Explorar demonstração**.
 
-**Teste imediatamente com o botão “Explorar demonstração”**. Funciona sem banco configurado. A demo tem três perfis, 12 categorias e 45 chamados fictícios. Os dados simulados são salvos em `sessionStorage`, isolados por aba. Use o seletor superior para alternar entre administrador, atendente e solicitante; clique no botão circular para reiniciar. A navegação no modo demo não executa operações no Firebase.
+Para testar a integração real com o Firebase, copie `.env.example` para `.env`:
 
-## 2. Preparar o Firebase real
+```powershell
+Copy-Item .env.example .env
+```
 
-Projeto Firebase: `taskflow-7d1cf` (configuração web incluída no `.env.example`).
+As variáveis do Firebase Web já vêm com a configuração do projeto de desenvolvimento. O arquivo `.env` não deve ser enviado ao Git. A configuração Web identifica o projeto, mas **não substitui as regras de segurança**.
 
-1. Confirme **Authentication > Sign-in method > E-mail/Senha** habilitado.
-2. Crie **Firestore Database** em modo de produção na região desejada, se ainda não criado.
-3. No Firebase Console, em **Authentication > Settings > Authorized domains**, autorize seu domínio usado em produção.
-4. Instale o Firebase CLI e faça login:
+## Configurando o Firebase
+
+O projeto usa o Firebase `taskflow-7d1cf`. Para testar com contas reais:
+
+1. Ative o método **E-mail/Senha** no Firebase Authentication.
+2. Crie um banco no **Cloud Firestore**, se ainda não existir.
+3. Confira os domínios autorizados na configuração do Authentication.
+4. Instale o Firebase CLI e publique as regras e índices deste repositório:
 
 ```bash
 npm install -g firebase-tools
 firebase login
-firebase use --add
 firebase deploy --only firestore:rules,firestore:indexes --project taskflow-7d1cf
 ```
 
-**Atenção:** `firebase deploy` publica regras e índices neste projeto. Se já usa Firestore com outras coleções/regras, faça merge com cuidado; as regras deste projeto negam acesso a qualquer coleção fora de `/companies/main`.
+**Cuidado:** publicar as regras pode substituir regras que já existam nesse projeto Firebase. Confira isso antes do deploy.
 
-### Primeiro administrador e primeira empresa
+### Criando a empresa e o primeiro administrador
 
-O registro inicial **não é público**, por segurança. Para criar a empresa e o primeiro administrador:
-
-1. Firebase Console > Configurações do projeto > Contas de serviço > **Gerar nova chave privada**.
-2. Salve o JSON no seu computador com o nome `service-account.json` na pasta do projeto. **Nunca suba esse arquivo ao GitHub, envie a ninguém ou use no frontend.** `.gitignore` o exclui.
-3. Execute:
+O primeiro administrador não é cadastrado pela tela pública. Use o script local `scripts/bootstrap.mjs` com uma chave de conta de serviço do Firebase:
 
 ```bash
-node scripts/bootstrap.mjs service-account.json admin@suaempresa.com.br "UmaSenhaForte123!" "Minha Empresa"
+node scripts/bootstrap.mjs service-account.json admin@empresa.com.br "SENHA_FORTE" "Nome da Empresa"
 ```
 
-O script cria `/companies/main`, 12 categorias e o primeiro usuário `admin`, caso a empresa ainda não exista. Não sobrescreve workspace existente. Você poderá mudar o nome e a cor da empresa em Configurações.
+A chave é gerada em **Configurações do projeto > Contas de serviço** no Firebase Console. Ela deve ficar apenas no computador de quem está configurando o ambiente. Nunca envie esse JSON para o GitHub. O `.gitignore` já ignora arquivos `service-account*.json`.
 
-**Atenção:** escolha uma senha forte; em um ambiente de produção real, evite passar senhas como argumento de terminal, pois elas podem ficar no histórico. Este bootstrap é direcionado a testes locais e portfólio. Depois, exclua com segurança a cópia local da chave quando não for mais necessária.
+O comando acima coloca a senha no histórico do terminal. Por isso, use apenas em um ambiente de teste controlado e não reutilize uma senha pessoal. O script não substitui um processo de provisionamento adequado para produção.
 
-## 3. Convidar usuários
+Depois do cadastro inicial, o administrador pode configurar categorias e convidar outros usuários pela interface. Nesta versão, o convite **não envia e-mail automaticamente**: o administrador precisa compartilhar o endereço do sistema com a pessoa convidada.
 
-1. Entre como administrador e vá em **Pessoas & equipes**.
-2. Clique **Convidar pessoa**, escolha perfil e categorias de atendimento (ex.: Bruno → Marketing, Intranet e Hardware).
-3. Compartilhe com a pessoa o endereço da aplicação; **o sistema ainda não envia e-mail de convite automaticamente**.
-4. A pessoa clica **Recebeu um convite? Ativar acesso**, cadastra nome, e-mail e senha, e recebe a verificação do Firebase.
-5. Depois de confirmar o endereço, retorna ao sistema e clica **Concluir ativação**. Se necessário, entre com a conta criada antes de concluir.
+## Estrutura do projeto
 
-Atendentes veem chamados de suas categorias; solicitantes veem apenas os seus. Administradores veem todos. Atribuição é manual, por atendente habilitado na categoria. A demo também permite simular todas essas ações.
+```text
+src/
+  App.tsx       telas e fluxos da aplicação
+  style.css     estilos e temas
+  demo.ts       dados usados no modo demonstração
+  firebase.ts   conexão com o Firebase
+  real.ts       operações com os dados reais
+  types.ts      tipos usados no projeto
+scripts/
+  bootstrap.mjs configuração inicial da empresa
+firestore.rules regras de acesso ao banco
+```
 
-## 4. Tecnologias
-
-- React 19 + TypeScript + Vite
-- Firebase Authentication + Firestore
-- Recharts, Lucide React
-- CSS personalizado; DM Sans, Manrope e Space Mono
-- Sem backend próprio nesta versão. Dados reais persistidos no Firebase.
-
-## 5. Produção e GitHub
-
-Para verificar a compilação e testar a distribuição:
+## Gerando a versão de produção
 
 ```bash
 npm run build
 npm run preview
 ```
 
-Faça commit **sem `service-account.json`, `.env`, `node_modules` ou `dist`**:
+O build é gerado na pasta `dist`. Antes de publicar, vale testar os fluxos principais com contas de cada perfil e conferir as regras do Firestore.
 
-```bash
-git init
-git add .
-git commit -m "feat: TaskFlow service desk com Firebase e demo"
-git branch -M main
-git remote add origin https://github.com/SEU-USUARIO/taskflow.git
-git push -u origin main
-```
+## O que ainda quero melhorar
 
-Para usar domínio próprio, publique o diretório `dist` em **Vercel** (build `npm run build`, output `dist`) ou Firebase Hosting, e configure DNS no provedor. GitHub Pages também funciona com ajuste de base para subdiretório se necessário.
+- Upload de anexos e logotipo da empresa.
+- Envio automático de convites e notificações.
+- Distribuição automática dos chamados entre atendentes.
+- Indicadores de SLA mais completos.
+- Testes automatizados e melhor separação dos componentes do `App.tsx`.
+- Auditoria e validação de segurança antes de qualquer uso corporativo.
 
-## Organização
+Atualmente a instalação trabalha com uma empresa no caminho `companies/main`. Não é uma plataforma multiempresa completa. O modo demo funciona separado da base real.
 
-```text
-src/
-  App.tsx       interface, navegação e módulos
-  style.css     identidade visual, dark/light, responsivo
-  types.ts      entidades e papéis
-  demo.ts       45 chamados, pessoas e categorias fictícias
-  firebase.ts   inicialização SDK
-  real.ts       operações Firebase
-scripts/
-  bootstrap.mjs primeiro administrador e empresa
-firestore.rules regras iniciais de segurança
-```
+## Repositório
 
-## Escopo e limitações conhecidas
+[github.com/brunonascimentodata/TaskFlow](https://github.com/brunonascimentodata/TaskFlow)
 
-- **Demo funcional**: dados temporários por aba, sem tocar na produção.
-- **Empresa real**: uma empresa por instalação Firebase (`companies/main`), personalização posterior. Não há multi-tenant completo.
-- **Sem upload de anexos/logotipo nesta versão**: Firebase Storage pode ser incluído posteriormente.
-- **Sem envio automático de convite**: admin registra convite e compartilha a URL.
-- **Indicadores básicos**: SLA empresarial, automação de atribuição, notificações e registros auditáveis completos são melhorias futuras. O histórico de comentários já é exibido.
-- **Segurança**: regras limitam quem pode ler/alterar chamados e convidar usuários. É um projeto de portfólio, não foi submetido a auditoria de segurança. A versão atual não trata limites de taxa, moderação de textos ou políticas corporativas avançadas.
-- **Bootstrap** usa chave privada exclusivamente no terminal local. Nunca exponha a chave. As chaves web `VITE_FIREBASE_*` são identificadores públicos, e não substituem regras de segurança.
-- **Convites** vinculados a endereço verificado e a permissões registradas pelo administrador. Não compartilhe acesso administrativo indiscriminadamente.
-- **Atenção**: o gerenciamento dos papéis é feito por regras do Firestore, não custom claims. Para organizações grandes, recomenda-se backend para criação de contas, auditoria e regras de negócio mais sofisticadas.
+Projeto de estudo e portfólio, em desenvolvimento.

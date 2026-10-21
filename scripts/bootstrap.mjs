@@ -1,4 +1,4 @@
-// Run only on your machine using a Firebase service account. Never commit the JSON key.
+// Esse script prepara a primeira empresa. A chave de serviço fica só na máquina local.
 import {readFileSync} from 'node:fs';
 import {initializeApp,cert} from 'firebase-admin/app';
 import {getAuth} from 'firebase-admin/auth';
